@@ -1,0 +1,48 @@
+pipeline {
+ agent any
+ 
+environment{
+ DOCKERHUB_CREDENTIALS=credentials('dockerhub')
+ appRegistry = "vishnuallampalli/backend"
+
+ }
+
+ stages {
+ stage('cleanup workspace') {
+ steps {
+ cleanWs()
+ }
+ }
+ stage('git -clone') {
+ steps {
+ git branch: 'main', credentialsId: '71fb874b-c4b7-4381-9b96-eb331aecc24b', url: 'https://github.com/vishnuallampalli/mi-spring.git'
+ }
+ }
+ stage('mvn build') {
+ steps {
+ sh "mvn clean install -DskipTests"
+ }
+ }
+ 
+ stage('docker build backend') {
+ steps {
+ script {
+ sh "sudo docker build -t vishnuallampalli/backend ."
+}
+}
+}
+stage('login') {
+steps{
+   sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u vishnuallampalli --password-stdin '
+ }
+ }
+
+ stage('push') {
+     steps{
+        sh ' docker push vishnuallampalli/backend'
+ }
+ }
+
+
+}
+}
